@@ -11,7 +11,7 @@ function Register() {
 
   const handleRegister = async () => {
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/register', { name, email, password })
+      const res = await axios.post('https://task-manager-9glc.onrender.com/api/auth/register', { name, email, password })
       localStorage.setItem('token', res.data.token)
       navigate('/dashboard')
     } catch (err) {
