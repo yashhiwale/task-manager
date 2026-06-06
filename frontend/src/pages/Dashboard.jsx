@@ -10,6 +10,7 @@ function Dashboard() {
   const [priority, setPriority] = useState('medium')
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [activeTab, setActiveTab] = useState('tasks')
   const navigate = useNavigate()
   const token = localStorage.getItem('token')
@@ -28,14 +29,15 @@ function Dashboard() {
   useEffect(() => { fetchTasks() }, [])
 
   const addTask = async () => {
-    if (!title.trim()) return
-    await axios.post(`${API}/api/tasks`,
-      { title, priority },
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    setTitle('')
-    fetchTasks()
-  }
+  if (!title.trim()) return
+  await axios.post(`${API}/api/tasks`,
+    { title, priority, dueDate: dueDate || null },
+    { headers: { Authorization: `Bearer ${token}` } }
+  )
+  setTitle('')
+  setDueDate('')
+  fetchTasks()
+}
 
   const toggleTask = async (id, completed) => {
     await axios.put(`${API}/api/tasks/${id}`,
@@ -213,6 +215,12 @@ function Dashboard() {
                   style={{ flex: 1, minWidth: '200px' }}
                 />
                 <select value={priority} onChange={(e) => setPriority(e.target.value)} style={{ minWidth: '110px' }}>
+                  <input
+  type="date"
+  value={dueDate}
+  onChange={(e) => setDueDate(e.target.value)}
+  style={{ padding: '10px', background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0', borderRadius: '8px' }}
+/>
                   <option value="low">🟢 Low</option>
                   <option value="medium">🟠 Medium</option>
                   <option value="high">🔴 High</option>
@@ -267,6 +275,15 @@ function Dashboard() {
                     color: priorityColors[task.priority].color,
                     fontWeight: '600', textTransform: 'uppercase'
                   }}>{task.priority}</span>
+                  {task.dueDate && (
+  <span style={{
+    fontSize: '11px', marginLeft: '8px',
+    color: new Date(task.dueDate) < new Date() && !task.completed ? '#fca5a5' : '#94a3b8'
+  }}>
+    📅 {new Date(task.dueDate).toLocaleDateString()}
+    {new Date(task.dueDate) < new Date() && !task.completed && ' ⚠️ Overdue'}
+  </span>
+)}
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginLeft: '16px' }}>
                   <button onClick={() => toggleTask(task._id, task.completed)} style={{
