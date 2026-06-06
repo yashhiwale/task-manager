@@ -207,26 +207,26 @@ function Dashboard() {
 
             {/* Add Task */}
             <div style={{ background: '#1e293b', padding: '20px', borderRadius: '16px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <input
                   type="text" placeholder="Add a new task..."
                   value={title} onChange={(e) => setTitle(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addTask()}
                   style={{ flex: 1, minWidth: '200px' }}
                 />
-                <select value={priority} onChange={(e) => setPriority(e.target.value)} style={{ minWidth: '110px' }}>
-                  <input
-  type="date"
-  value={dueDate}
-  onChange={(e) => setDueDate(e.target.value)}
-  style={{ padding: '10px', background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0', borderRadius: '8px' }}
-/>
+                <select value={priority} onChange={(e) => setPriority(e.target.value)} style={{ minWidth: '120px' }}>
                   <option value="low">🟢 Low</option>
                   <option value="medium">🟠 Medium</option>
                   <option value="high">🔴 High</option>
                 </select>
+                <input
+                  type="date"
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
+                  style={{ padding: '10px', background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0', borderRadius: '8px' }}
+                />
                 <button onClick={addTask} style={{
-                  background: '#6366f1', color: 'white', borderRadius: '8px', padding: '10px 20px'
+                  background: '#6366f1', color: 'white', borderRadius: '8px', padding: '10px 20px', border: 'none', cursor: 'pointer'
                 }}>+ Add</button>
               </div>
             </div>
