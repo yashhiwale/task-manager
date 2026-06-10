@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import Profile from './Profile'
 
 const API = 'https://task-manager-9glc.onrender.com'
 
@@ -8,10 +9,10 @@ function Dashboard() {
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
   const [priority, setPriority] = useState('medium')
+  const [dueDate, setDueDate] = useState('')
   const [filter, setFilter] = useState('all')
   const [search, setSearch] = useState('')
-  const [dueDate, setDueDate] = useState('')
-  const [activeTab, setActiveTab] = useState('tasks')
+  const [activeTab, setActiveTab] = useState('dashboard')
   const navigate = useNavigate()
   const token = localStorage.getItem('token')
 
@@ -29,15 +30,15 @@ function Dashboard() {
   useEffect(() => { fetchTasks() }, [])
 
   const addTask = async () => {
-  if (!title.trim()) return
-  await axios.post(`${API}/api/tasks`,
-    { title, priority, dueDate: dueDate || null },
-    { headers: { Authorization: `Bearer ${token}` } }
-  )
-  setTitle('')
-  setDueDate('')
-  fetchTasks()
-}
+    if (!title.trim()) return
+    await axios.post(`${API}/api/tasks`,
+      { title, priority, dueDate: dueDate || null },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    setTitle('')
+    setDueDate('')
+    fetchTasks()
+  }
 
   const toggleTask = async (id, completed) => {
     await axios.put(`${API}/api/tasks/${id}`,
@@ -74,6 +75,12 @@ function Dashboard() {
   const highPriority = tasks.filter(t => t.priority === 'high' && !t.completed).length
   const completionRate = tasks.length ? Math.round((completed / tasks.length) * 100) : 0
 
+  const navItems = [
+    { id: 'dashboard', icon: '📊', label: 'Dashboard' },
+    { id: 'tasks', icon: '✅', label: 'My Tasks' },
+    { id: 'profile', icon: '👤', label: 'Profile' },
+  ]
+
   return (
     <div style={{ minHeight: '100vh', background: '#0f172a', display: 'flex' }}>
 
@@ -87,17 +94,14 @@ function Dashboard() {
           📋 TaskManager
         </h2>
 
-        {[
-          { id: 'dashboard', icon: '📊', label: 'Dashboard' },
-          { id: 'tasks', icon: '✅', label: 'My Tasks' },
-        ].map(item => (
+        {navItems.map(item => (
           <button key={item.id} onClick={() => setActiveTab(item.id)} style={{
             display: 'flex', alignItems: 'center', gap: '10px',
             padding: '10px 14px', borderRadius: '10px', border: 'none',
             background: activeTab === item.id ? '#6366f1' : 'transparent',
             color: activeTab === item.id ? 'white' : '#94a3b8',
             cursor: 'pointer', fontSize: '14px', fontWeight: '500',
-            textAlign: 'left'
+            textAlign: 'left', width: '100%'
           }}>
             {item.icon} {item.label}
           </button>
@@ -118,7 +122,7 @@ function Dashboard() {
       {/* Main Content */}
       <div style={{ flex: 1, padding: '30px', overflowY: 'auto' }}>
 
-        {/* Dashboard Tab */}
+        {/* ===== DASHBOARD TAB ===== */}
         {activeTab === 'dashboard' && (
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#f1f5f9', marginBottom: '8px' }}>
@@ -187,7 +191,7 @@ function Dashboard() {
           </div>
         )}
 
-        {/* Tasks Tab */}
+        {/* ===== TASKS TAB ===== */}
         {activeTab === 'tasks' && (
           <div>
             <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#f1f5f9', marginBottom: '8px' }}>
@@ -207,26 +211,26 @@ function Dashboard() {
 
             {/* Add Task */}
             <div style={{ background: '#1e293b', padding: '20px', borderRadius: '16px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <input
                   type="text" placeholder="Add a new task..."
                   value={title} onChange={(e) => setTitle(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && addTask()}
                   style={{ flex: 1, minWidth: '200px' }}
                 />
-                <select value={priority} onChange={(e) => setPriority(e.target.value)} style={{ minWidth: '120px' }}>
+                <select value={priority} onChange={(e) => setPriority(e.target.value)}
+                  style={{ minWidth: '110px' }}>
                   <option value="low">🟢 Low</option>
                   <option value="medium">🟠 Medium</option>
                   <option value="high">🔴 High</option>
                 </select>
                 <input
-                  type="date"
-                  value={dueDate}
+                  type="date" value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  style={{ padding: '10px', background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0', borderRadius: '8px' }}
+                  style={{ padding: '10px', background: '#0f172a', border: '1px solid #334155', color: '#e2e8f0', borderRadius: '8px' }}
                 />
                 <button onClick={addTask} style={{
-                  background: '#6366f1', color: 'white', borderRadius: '8px', padding: '10px 20px', border: 'none', cursor: 'pointer'
+                  background: '#6366f1', color: 'white', borderRadius: '8px', padding: '10px 20px'
                 }}>+ Add</button>
               </div>
             </div>
@@ -269,21 +273,23 @@ function Dashboard() {
                   }}>
                     {task.title}
                   </p>
-                  <span style={{
-                    fontSize: '11px', padding: '3px 10px', borderRadius: '99px',
-                    background: priorityColors[task.priority].bg,
-                    color: priorityColors[task.priority].color,
-                    fontWeight: '600', textTransform: 'uppercase'
-                  }}>{task.priority}</span>
-                  {task.dueDate && (
-  <span style={{
-    fontSize: '11px', marginLeft: '8px',
-    color: new Date(task.dueDate) < new Date() && !task.completed ? '#fca5a5' : '#94a3b8'
-  }}>
-    📅 {new Date(task.dueDate).toLocaleDateString()}
-    {new Date(task.dueDate) < new Date() && !task.completed && ' ⚠️ Overdue'}
-  </span>
-)}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span style={{
+                      fontSize: '11px', padding: '3px 10px', borderRadius: '99px',
+                      background: priorityColors[task.priority].bg,
+                      color: priorityColors[task.priority].color,
+                      fontWeight: '600', textTransform: 'uppercase'
+                    }}>{task.priority}</span>
+                    {task.dueDate && (
+                      <span style={{
+                        fontSize: '11px',
+                        color: new Date(task.dueDate) < new Date() && !task.completed ? '#fca5a5' : '#94a3b8'
+                      }}>
+                        📅 {new Date(task.dueDate).toLocaleDateString()}
+                        {new Date(task.dueDate) < new Date() && !task.completed && ' ⚠️ Overdue'}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginLeft: '16px' }}>
                   <button onClick={() => toggleTask(task._id, task.completed)} style={{
@@ -299,6 +305,12 @@ function Dashboard() {
             ))}
           </div>
         )}
+
+        {/* ===== PROFILE TAB ===== */}
+        {activeTab === 'profile' && (
+          <Profile />
+        )}
+
       </div>
     </div>
   )
