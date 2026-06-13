@@ -1,16 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 
 const API = 'https://task-manager-9glc.onrender.com'
 
 function Profile() {
-  const [user, setUser] = useState({ name: '', email: '' })
+  const [user, setUser] = useState({ name: '', email: '', avatar: '' })
   const [newName, setNewName] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
   const token = localStorage.getItem('token')
   const navigate = useNavigate()
 
@@ -28,6 +30,28 @@ function Profile() {
     }
     fetchProfile()
   }, [])
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('avatar', file)
+      const res = await axios.post(`${API}/api/auth/upload-avatar`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+      setUser(res.data)
+      setMessage('Profile picture updated!')
+      setError('')
+    } catch {
+      setError('Upload failed. Try again!')
+    }
+    setUploading(false)
+  }
 
   const updateName = async () => {
     try {
@@ -78,16 +102,58 @@ function Profile() {
 
       {/* Avatar */}
       <div style={{ background: '#1e293b', borderRadius: '16px', padding: '24px', marginBottom: '20px', textAlign: 'center' }}>
-        <div style={{
-          width: '80px', height: '80px', borderRadius: '50%',
-          background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '32px', margin: '0 auto 16px'
-        }}>
-          {user.name ? user.name[0].toUpperCase() : '?'}
+        
+        {/* Profile Picture */}
+        <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
+          {user.avatar ? (
+            <img
+              src={user.avatar} alt="Profile"
+              style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #6366f1' }}
+            />
+          ) : (
+            <div style={{
+              width: '90px', height: '90px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '36px', margin: '0 auto', border: '3px solid #6366f1'
+            }}>
+              {user.name ? user.name[0].toUpperCase() : '?'}
+            </div>
+          )}
+
+          {/* Upload Button Overlay */}
+          <button
+            onClick={() => fileInputRef.current.click()}
+            style={{
+              position: 'absolute', bottom: '0', right: '0',
+              background: '#6366f1', border: 'none', borderRadius: '50%',
+              width: '28px', height: '28px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '14px'
+            }}>
+            📷
+          </button>
         </div>
-        <h2 style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: '600' }}>{user.name}</h2>
+
+        <input
+          type="file" ref={fileInputRef} onChange={handleAvatarUpload}
+          accept="image/*" style={{ display: 'none' }}
+        />
+
+        {uploading && <p style={{ color: '#94a3b8', fontSize: '13px' }}>Uploading... ⏳</p>}
+
+        <h2 style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: '600' }}>{user.name || 'No name set'}</h2>
         <p style={{ color: '#94a3b8', fontSize: '14px' }}>{user.email}</p>
+
+        <button
+          onClick={() => fileInputRef.current.click()}
+          style={{
+            marginTop: '12px', background: 'transparent', border: '1px solid #6366f1',
+            color: '#6366f1', borderRadius: '8px', padding: '8px 16px',
+            cursor: 'pointer', fontSize: '13px'
+          }}>
+          📷 Change Photo
+        </button>
       </div>
 
       {/* Update Name */}

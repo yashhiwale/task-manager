@@ -1,4 +1,5 @@
 const express = require('express');
+const { upload } = require('../cloudinary');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -86,6 +87,22 @@ router.put('/password', async (req, res) => {
     res.json({ message: 'Password updated' });
   } catch {
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Upload Profile Picture
+router.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findByIdAndUpdate(
+      decoded.id,
+      { avatar: req.file.path },
+      { new: true }
+    ).select('-password');
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Upload failed' });
   }
 });
 module.exports = router;
