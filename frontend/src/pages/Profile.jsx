@@ -1,197 +1,115 @@
-import { useState, useEffect, useRef } from 'react'
-import axios from 'axios'
-import { useNavigate } from 'react-router-dom'
+import React, { useState, useEffect } from 'react';
 
-const API = 'https://task-manager-9glc.onrender.com'
-
-function Profile() {
-  const [user, setUser] = useState({ name: '', email: '', avatar: '' })
-  const [newName, setNewName] = useState('')
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
-  const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef(null)
-  const token = localStorage.getItem('token')
-  const navigate = useNavigate()
+const Profile = () => {
+  const [user, setUser] = useState({ name: '', email: '', avatar: '' });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const [message, setMessage] = useState({ text: '', type: '' });
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await axios.get(`${API}/api/auth/profile`, {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        setUser(res.data)
-        setNewName(res.data.name)
-      } catch {
-        navigate('/login')
-      }
-    }
-    fetchProfile()
-  }, [])
+    const savedUser = JSON.parse(localStorage.getItem('user')) || { name: 'No name set', email: 'p@gmail.com', avatar: '' };
+    setUser(savedUser);
+  }, []);
 
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    setUploading(true)
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    if (!selectedFile) {
+      setMessage({ text: 'Please select a photo first', type: 'error' });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('avatar', selectedFile);
+
     try {
-      const formData = new FormData()
-      formData.append('avatar', file)
-      const res = await axios.post(`${API}/api/auth/upload-avatar`, formData, {
+      const token = localStorage.getItem('token');
+      // NOTE: Do NOT add 'Content-Type' header when sending FormData
+      const response = await fetch('https://task-manager-9glc.onrender.com/api/auth/upload-avatar', {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      })
-      setUser(res.data)
-      setMessage('Profile picture updated!')
-      setError('')
-    } catch {
-      setError('Upload failed. Try again!')
-    }
-    setUploading(false)
-  }
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
 
-  const updateName = async () => {
-    try {
-      await axios.put(`${API}/api/auth/profile`,
-        { name: newName },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      setUser({ ...user, name: newName })
-      setMessage('Name updated successfully!')
-      setError('')
-    } catch {
-      setError('Failed to update name')
-    }
-  }
+      const data = await response.json();
 
-  const updatePassword = async () => {
-    try {
-      await axios.put(`${API}/api/auth/password`,
-        { currentPassword, newPassword },
-        { headers: { Authorization: `Bearer ${token}` } }
-      )
-      setMessage('Password updated successfully!')
-      setError('')
-      setCurrentPassword('')
-      setNewPassword('')
-    } catch {
-      setError('Current password is incorrect')
+      if (response.ok) {
+        setMessage({ text: 'Upload successful!', type: 'success' });
+        const updatedUser = { ...user, avatar: data.user.avatar };
+        setUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        setSelectedFile(null);
+      } else {
+        setMessage({ text: data.error || data.message || 'Upload failed. Try again!', type: 'error' });
+      }
+    } catch (error) {
+      console.error("Frontend Fetch Error:", error);
+      setMessage({ text: 'Upload failed. network error!', type: 'error' });
     }
-  }
+  };
 
   return (
-    <div style={{ padding: '30px', maxWidth: '600px' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#f1f5f9', marginBottom: '8px' }}>
-        Profile 👤
-      </h1>
-      <p style={{ color: '#94a3b8', marginBottom: '30px' }}>Manage your account</p>
+    <div style={{ padding: '20px', color: '#fff', backgroundColor: '#0f172a', minHeight: '100vh' }}>
+      <h2>Profile 👤</h2>
+      <p style={{ color: '#94a3b8' }}>Manage your account</p>
 
-      {message && (
-        <div style={{ background: '#052e16', color: '#86efac', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px' }}>
-          ✅ {message}
+      {message.text && (
+        <div style={{
+          padding: '10px',
+          marginBottom: '20px',
+          backgroundColor: message.type === 'error' ? '#7f1d1d' : '#064e3b',
+          border: `1px solid ${message.type === 'error' ? '#f87171' : '#34d399'}`,
+          borderRadius: '4px',
+          textAlign: 'center'
+        }}>
+          {message.text}
         </div>
       )}
-      {error && (
-        <div style={{ background: '#450a0a', color: '#fca5a5', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px' }}>
-          ❌ {error}
-        </div>
-      )}
 
-      {/* Avatar */}
-      <div style={{ background: '#1e293b', borderRadius: '16px', padding: '24px', marginBottom: '20px', textAlign: 'center' }}>
+      <div style={{ backgroundColor: '#1e293b', padding: '30px', borderRadius: '8px', textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
+        <div style={{ position: 'relative', width: '100px', height: '100px', margin: '0 auto 15px' }}>
+          <img
+            src={previewUrl || user.avatar || 'https://via.placeholder.com/100?text=?'}
+            alt="Avatar"
+            style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover', border: '2px solid #6366f1' }}
+          />
+        </div>
         
-        {/* Profile Picture */}
-        <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
-          {user.avatar ? (
-            <img
-              src={user.avatar} alt="Profile"
-              style={{ width: '90px', height: '90px', borderRadius: '50%', objectFit: 'cover', border: '3px solid #6366f1' }}
-            />
-          ) : (
-            <div style={{
-              width: '90px', height: '90px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '36px', margin: '0 auto', border: '3px solid #6366f1'
-            }}>
-              {user.name ? user.name[0].toUpperCase() : '?'}
-            </div>
+        <h3>{user.name}</h3>
+        <p style={{ color: '#94a3b8', marginBottom: '20px' }}>{user.email}</p>
+
+        <form onSubmit={handleUpload}>
+          <input
+            type="file"
+            accept="image/*"
+            id="avatar-input"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+          <label
+            htmlFor="avatar-input"
+            style={{ display: 'block', padding: '8px', backgroundColor: '#334155', borderRadius: '4px', cursor: 'pointer', marginBottom: '10px' }}
+          >
+            Choose New Photo
+          </label>
+          {selectedFile && (
+            <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#6366f1', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+              Upload Photo
+            </button>
           )}
-
-          {/* Upload Button Overlay */}
-          <button
-            onClick={() => fileInputRef.current.click()}
-            style={{
-              position: 'absolute', bottom: '0', right: '0',
-              background: '#6366f1', border: 'none', borderRadius: '50%',
-              width: '28px', height: '28px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '14px'
-            }}>
-            📷
-          </button>
-        </div>
-
-        <input
-          type="file" ref={fileInputRef} onChange={handleAvatarUpload}
-          accept="image/*" style={{ display: 'none' }}
-        />
-
-        {uploading && <p style={{ color: '#94a3b8', fontSize: '13px' }}>Uploading... ⏳</p>}
-
-        <h2 style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: '600' }}>{user.name || 'No name set'}</h2>
-        <p style={{ color: '#94a3b8', fontSize: '14px' }}>{user.email}</p>
-
-        <button
-          onClick={() => fileInputRef.current.click()}
-          style={{
-            marginTop: '12px', background: 'transparent', border: '1px solid #6366f1',
-            color: '#6366f1', borderRadius: '8px', padding: '8px 16px',
-            cursor: 'pointer', fontSize: '13px'
-          }}>
-          📷 Change Photo
-        </button>
-      </div>
-
-      {/* Update Name */}
-      <div style={{ background: '#1e293b', borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
-        <h3 style={{ color: '#f1f5f9', marginBottom: '16px', fontSize: '16px' }}>✏️ Update Name</h3>
-        <input
-          type="text" value={newName}
-          onChange={(e) => setNewName(e.target.value)}
-          style={{ width: '100%', marginBottom: '12px', display: 'block' }}
-        />
-        <button onClick={updateName} style={{
-          background: '#6366f1', color: 'white', borderRadius: '8px', padding: '10px 20px'
-        }}>
-          Update Name
-        </button>
-      </div>
-
-      {/* Update Password */}
-      <div style={{ background: '#1e293b', borderRadius: '16px', padding: '24px' }}>
-        <h3 style={{ color: '#f1f5f9', marginBottom: '16px', fontSize: '16px' }}>🔐 Change Password</h3>
-        <input
-          type="password" placeholder="Current Password"
-          value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
-          style={{ width: '100%', marginBottom: '12px', display: 'block' }}
-        />
-        <input
-          type="password" placeholder="New Password"
-          value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-          style={{ width: '100%', marginBottom: '12px', display: 'block' }}
-        />
-        <button onClick={updatePassword} style={{
-          background: '#6366f1', color: 'white', borderRadius: '8px', padding: '10px 20px'
-        }}>
-          Update Password
-        </button>
+        </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Profile
+export default Profile;
