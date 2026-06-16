@@ -1,11 +1,15 @@
 const cloudinary = require('cloudinary').v2;
-const multer = require('multer');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const multer = require('multer');
+const dotenv = require('dotenv');
 
+dotenv.config();
+
+// Direct configuration integration check
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? process.env.CLOUDINARY_CLOUD_NAME.trim() : '',
+  api_key: process.env.CLOUDINARY_API_KEY ? process.env.CLOUDINARY_API_KEY.trim() : '',
+  api_secret: process.env.CLOUDINARY_API_SECRET ? process.env.CLOUDINARY_API_SECRET.trim() : '',
   secure: true
 });
 
@@ -13,14 +17,17 @@ const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: async (req, file) => {
     return {
-      folder: 'task-manager-profiles',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-      transformation: [{ width: 200, height: 200, crop: 'fill' }],
-      upload_preset: 'task-manager-uploads'
+      folder: 'task-manager-uploads',
+      format: 'jpeg', // Force strict standard file format format
+      public_id: `avatar-${Date.now()}`
     };
   }
 });
 
-const upload = multer({ storage: storage });
+// Adding strict limits to prevent memory payload errors on Render
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 } // Max 5MB
+});
 
 module.exports = { cloudinary, upload };
