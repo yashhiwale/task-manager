@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Profile = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState({ name: '', email: '', avatar: '' });
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -31,7 +33,6 @@ const Profile = () => {
 
     try {
       const token = localStorage.getItem('token');
-      // NOTE: Do NOT add 'Content-Type' header when sending FormData
       const response = await fetch('https://task-manager-9glc.onrender.com/api/auth/upload-avatar', {
         method: 'POST',
         headers: {
@@ -52,15 +53,23 @@ const Profile = () => {
         setMessage({ text: data.error || data.message || 'Upload failed. Try again!', type: 'error' });
       }
     } catch (error) {
-      console.error("Frontend Fetch Error:", error);
       setMessage({ text: 'Upload failed. network error!', type: 'error' });
     }
+  };
+
+  // Logout Functionality Handler
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    // Change logic if using different routing configs
+    navigate('/login'); 
+    window.location.reload(); // Hard reset session state
   };
 
   return (
     <div style={{ padding: '20px', color: '#fff', backgroundColor: '#0f172a', minHeight: '100vh' }}>
       <h2>Profile 👤</h2>
-      <p style={{ color: '#94a3b8' }}>Manage your account</p>
+      <p style={{ color: '#94a3b8' }}>Manage your account and session</p>
 
       {message.text && (
         <div style={{
@@ -87,7 +96,7 @@ const Profile = () => {
         <h3>{user.name}</h3>
         <p style={{ color: '#94a3b8', marginBottom: '20px' }}>{user.email}</p>
 
-        <form onSubmit={handleUpload}>
+        <form onSubmit={handleUpload} style={{ marginBottom: '20px' }}>
           <input
             type="file"
             accept="image/*"
@@ -107,6 +116,28 @@ const Profile = () => {
             </button>
           )}
         </form>
+
+        <hr style={{ border: '0', height: '1px', backgroundColor: '#334155', margin: '25px 0' }} />
+
+        {/* Action Logout Block */}
+        <button
+          onClick={handleLogout}
+          style={{
+            width: '100%',
+            padding: '12px',
+            backgroundColor: '#ef4444',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            transition: 'background-color 0.2s'
+          }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#dc2626'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#ef4444'}
+        >
+          Logout Account 🚪
+        </button>
       </div>
     </div>
   );
