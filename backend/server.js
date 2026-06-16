@@ -19,6 +19,10 @@ app.get('/', (req, res) => {
   res.send('Task Manager API is running!');
 });
 
+app.get('/ping', (req, res) => {
+  res.json({ status: 'alive' });
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

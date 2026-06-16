@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom'
 
 const API = 'https://task-manager-9glc.onrender.com'
 
-function Register() {
+function Register({ setToken }) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -15,6 +15,7 @@ function Register() {
     try {
       const res = await axios.post(`${API}/api/auth/register`, { name, email, password })
       localStorage.setItem('token', res.data.token)
+      setToken(res.data.token)
       navigate('/dashboard')
     } catch {
       setError('Something went wrong. Try again!')

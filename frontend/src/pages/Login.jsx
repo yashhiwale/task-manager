@@ -4,21 +4,22 @@ import { useNavigate, Link } from 'react-router-dom'
 
 const API = 'https://task-manager-9glc.onrender.com'
 
-function Login() {
+function Login({ setToken }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
   const handleLogin = async () => {
-    try {
-      const res = await axios.post(`${API}/api/auth/login`, { email, password })
-      localStorage.setItem('token', res.data.token)
-      navigate('/dashboard')
-    } catch {
-      setError('Invalid email or password')
-    }
+  try {
+    const res = await axios.post(`${API}/api/auth/login`, { email, password })
+    localStorage.setItem('token', res.data.token)
+    setToken(res.data.token)
+    navigate('/dashboard')
+  } catch {
+    setError('Invalid email or password')
   }
+}
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a' }}>
