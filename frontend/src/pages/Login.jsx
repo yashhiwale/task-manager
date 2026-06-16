@@ -1,75 +1,52 @@
-import { useState } from 'react'
-import axios from 'axios'
-import { useNavigate, Link } from 'react-router-dom'
+import React, { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 
-function Login() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const navigate = useNavigate()
+const Login = () => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
 
-  const handleLogin = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      const res = await axios.post('https://task-manager-9glc.onrender.com/api/auth/login', { email, password })
-      localStorage.setItem('token', res.data.token)
-      navigate('/dashboard')
+      const response = await fetch('https://task-manager-9glc.onrender.com/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      const data = await response.json();
+      if (response.ok) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/dashboard');
+      } else {
+        setError(data.message || 'Login failed');
+      }
     } catch (err) {
-      setError('Invalid email or password')
+      setError('Network error. Try again.');
     }
-  }
+  };
 
   return (
-    <div style={{
-      minHeight: '100vh', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', background: '#0f172a'
-    }}>
-      <div style={{
-        background: '#1e293b', padding: '40px', borderRadius: '16px',
-        width: '100%', maxWidth: '400px', boxShadow: '0 25px 50px rgba(0,0,0,0.5)'
-      }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '8px', fontSize: '28px', color: '#f1f5f9' }}>
-          Welcome Back 👋
-        </h2>
-        <p style={{ textAlign: 'center', color: '#94a3b8', marginBottom: '30px' }}>
-          Login to your account
-        </p>
-
-        {error && (
-          <div style={{
-            background: '#450a0a', color: '#fca5a5', padding: '10px 14px',
-            borderRadius: '8px', marginBottom: '16px', fontSize: '14px'
-          }}>
-            {error}
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', backgroundColor: '#0f172a', color: '#fff' }}>
+      <div style={{ backgroundColor: '#1e293b', padding: '40px', borderRadius: '8px', width: '100%', maxWidth: '400px' }}>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Login</h2>
+        {error && <div style={{ backgroundColor: '#7f1d1d', padding: '10px', borderRadius: '4px', marginBottom: '15px', textAlign: 'center' }}>{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8' }}>Email</label>
+            <input type="email" required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#fff' }} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
           </div>
-        )}
-
-        <input
-          type="email" placeholder="Email address" value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{ width: '100%', marginBottom: '12px', display: 'block' }}
-        />
-        <input
-          type="password" placeholder="Password" value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ width: '100%', marginBottom: '20px', display: 'block' }}
-        />
-
-        <button onClick={handleLogin} style={{
-          width: '100%', background: '#6366f1', color: 'white',
-          fontSize: '16px', padding: '12px', borderRadius: '8px'
-        }}>
-          Login →
-        </button>
-
-        <p style={{ textAlign: 'center', marginTop: '20px', color: '#94a3b8' }}>
-          Don't have an account?{' '}
-          <Link to="/register" style={{ color: '#6366f1', textDecoration: 'none', fontWeight: '600' }}>
-            Register
-          </Link>
-        </p>
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', color: '#94a3b8' }}>Password</label>
+            <input type="password" required style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #334155', backgroundColor: '#0f172a', color: '#fff' }} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+          </div>
+          <button type="submit" style={{ width: '100%', padding: '12px', backgroundColor: '#6366f1', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Sign In</button>
+        </form>
+        <p style={{ textAlign: 'center', marginTop: '15px', color: '#94a3b8' }}>Don't have an account? <Link to="/register" style={{ color: '#6366f1', textDecoration: 'none' }}>Register</Link></p>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;
