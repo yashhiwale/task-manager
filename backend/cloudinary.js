@@ -1,31 +1,25 @@
 const cloudinary = require('cloudinary').v2;
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const multer = require('multer');
-const dotenv = require('dotenv');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
-dotenv.config();
-
-// Direct configuration integration check with strict trimming
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? process.env.CLOUDINARY_CLOUD_NAME.trim() : '',
-  api_key: process.env.CLOUDINARY_API_KEY ? process.env.CLOUDINARY_API_KEY.trim() : '',
-  api_secret: process.env.CLOUDINARY_API_SECRET ? process.env.CLOUDINARY_API_SECRET.trim() : '',
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true
 });
 
-// Simplified and highly stable configuration storage matrix
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: {
-    folder: 'task-manager-uploads',
-    allowed_formats: ['jpg', 'png', 'jpeg'],
-    // Let Cloudinary handle the unique public_id automatically to avoid signature mismatch
+  params: async (req, file) => {
+    return {
+      folder: 'task-manager-profiles',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+      transformation: [{ width: 200, height: 200, crop: 'fill' }]
+    };
   }
 });
 
-const upload = multer({ 
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // Max 5MB file size limit
-});
+const upload = multer({ storage: storage });
 
 module.exports = { cloudinary, upload };

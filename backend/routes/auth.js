@@ -1,60 +1,102 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { upload } = require('../cloudinary');
 
-const authMiddleware = async (req, res, next) => {
+// Register
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    let user = await User.findOne({ email });
+    if (user) return res.status(400).json({ message: 'User already exists' });
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    user = new User({ name, email, password: hashedPassword });
+    await user.save();
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get Profile
+router.get('/profile', async (req, res) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    if (!token) return res.status(401).json({ message: 'No token, authorization denied' });
-
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
+    const user = await User.findById(decoded.id).select('-password');
+    res.json(user);
+  } catch {
+    res.status(401).json({ message: 'Unauthorized' });
   }
-};
+});
 
-// Standalone endpoint handler capturing direct multer lifecycle events
-router.post('/upload-avatar', authMiddleware, (req, res, next) => {
-  upload.single('avatar')(req, res, async function (err) {
-    if (err) {
-      console.error("CRITICAL BACKEND MULTED ERROR:", err.message);
-      return res.status(400).json({ 
-        message: 'Cloudinary upload failed', 
-        error: err.message 
-      });
-    }
+// Update Name
+router.put('/profile', async (req, res) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findByIdAndUpdate(
+      decoded.id,
+      { name: req.body.name },
+      { new: true }
+    ).select('-password');
+    res.json(user);
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
-    try {
-      if (!req.file || !req.file.path) {
-        return res.status(400).json({ message: 'No file metadata generated from cloud storage' });
-      }
+// Update Password
+router.put('/password', async (req, res) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Wrong password' });
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(req.body.newPassword, salt);
+    await user.save();
+    res.json({ message: 'Password updated' });
+  } catch {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
-      const userId = req.user.id;
-      const imageUrl = req.file.path;
-
-      const updatedUser = await User.findByIdAndUpdate(
-        userId,
-        { avatar: imageUrl },
-        { new: true }
-      ).select('-password');
-
-      if (!updatedUser) {
-        return res.status(404).json({ message: 'User reference lookup failed inside DB' });
-      }
-
-      return res.status(200).json({
-        message: 'Profile picture updated successfully',
-        user: updatedUser
-      });
-    } catch (dbError) {
-      console.error("DATABASE PERSISTENCE ERROR:", dbError.message);
-      return res.status(500).json({ message: 'Server database failure during write sync' });
-    }
-  });
+// Upload Avatar
+router.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findByIdAndUpdate(
+      decoded.id,
+      { avatar: req.file.path },
+      { new: true }
+    ).select('-password');
+    res.json(user);
+  } catch (err) {
+    console.error('Avatar upload error:', err);
+    res.status(500).json({ message: 'Upload failed' });
+  }
 });
 
 module.exports = router;
