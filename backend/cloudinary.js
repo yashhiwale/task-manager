@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-// Direct configuration integration check
+// Direct configuration integration check with strict trimming
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME ? process.env.CLOUDINARY_CLOUD_NAME.trim() : '',
   api_key: process.env.CLOUDINARY_API_KEY ? process.env.CLOUDINARY_API_KEY.trim() : '',
@@ -13,21 +13,19 @@ cloudinary.config({
   secure: true
 });
 
+// Simplified and highly stable configuration storage matrix
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
-  params: async (req, file) => {
-    return {
-      folder: 'task-manager-uploads',
-      format: 'jpeg', // Force strict standard file format format
-      public_id: `avatar-${Date.now()}`
-    };
+  params: {
+    folder: 'task-manager-uploads',
+    allowed_formats: ['jpg', 'png', 'jpeg'],
+    // Let Cloudinary handle the unique public_id automatically to avoid signature mismatch
   }
 });
 
-// Adding strict limits to prevent memory payload errors on Render
 const upload = multer({ 
   storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 } // Max 5MB
+  limits: { fileSize: 5 * 1024 * 1024 } // Max 5MB file size limit
 });
 
 module.exports = { cloudinary, upload };
