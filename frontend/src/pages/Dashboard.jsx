@@ -10,8 +10,10 @@ function Dashboard() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('medium')
+  const [category, setCategory] = useState('work')
   const [dueDate, setDueDate] = useState('')
   const [filter, setFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState('dashboard')
   const navigate = useNavigate()
@@ -33,7 +35,7 @@ function Dashboard() {
   const addTask = async () => {
     if (!title.trim()) return
     await axios.post(`${API}/api/tasks`,
-      { title, description, priority, dueDate: dueDate || null },
+      { title, description, priority, category, dueDate: dueDate || null },
       { headers: { Authorization: `Bearer ${token}` } }
     )
     setTitle('')
@@ -63,8 +65,16 @@ function Dashboard() {
     low: { bg: '#052e16', color: '#86efac', dot: '#22c55e' }
   }
 
+  const categoryConfig = {
+    work: { icon: '💼', color: '#93c5fd', bg: '#1e3a5f', label: 'Work' },
+    personal: { icon: '🏠', color: '#d8b4fe', bg: '#3b1e54', label: 'Personal' },
+    study: { icon: '📚', color: '#5eead4', bg: '#134e4a', label: 'Study' },
+    other: { icon: '📌', color: '#cbd5e1', bg: '#334155', label: 'Other' }
+  }
+
   const filteredTasks = tasks
     .filter(t => filter === 'all' ? true : filter === 'completed' ? t.completed : !t.completed)
+    .filter(t => categoryFilter === 'all' ? true : t.category === categoryFilter)
     .filter(t => t.title.toLowerCase().includes(search.toLowerCase()))
 
   const completed = tasks.filter(t => t.completed).length
@@ -198,6 +208,13 @@ function Dashboard() {
                   <option value="medium">🟠 Medium</option>
                   <option value="high">🔴 High</option>
                 </select>
+                <select value={category} onChange={(e) => setCategory(e.target.value)}
+                  style={{ minWidth: '110px', background: '#0f172a', border: '1px solid #334155', color: '#e2e8f0', padding: '10px', borderRadius: '8px' }}>
+                  <option value="work">💼 Work</option>
+                  <option value="personal">🏠 Personal</option>
+                  <option value="study">📚 Study</option>
+                  <option value="other">📌 Other</option>
+                </select>
                 <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
                   style={{ padding: '10px', background: '#0f172a', border: '1px solid #334155', color: '#e2e8f0', borderRadius: '8px' }}
                 />
@@ -220,7 +237,7 @@ function Dashboard() {
             </div>
 
             {/* Search & Filter */}
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
               <input type="text" placeholder="🔍 Search tasks..." value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{ flex: 1, minWidth: '180px', background: '#1e293b', border: '1px solid #334155', color: '#e2e8f0', padding: '10px 14px', borderRadius: '8px' }}
@@ -231,6 +248,23 @@ function Dashboard() {
                   color: filter === f ? 'white' : '#94a3b8',
                   borderRadius: '8px', padding: '10px 16px', border: 'none', cursor: 'pointer', textTransform: 'capitalize'
                 }}>{f}</button>
+              ))}
+            </div>
+
+            {/* Category Filter */}
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
+              <button onClick={() => setCategoryFilter('all')} style={{
+                background: categoryFilter === 'all' ? '#6366f1' : '#1e293b',
+                color: categoryFilter === 'all' ? 'white' : '#94a3b8',
+                borderRadius: '8px', padding: '8px 14px', border: 'none', cursor: 'pointer', fontSize: '13px'
+              }}>All Categories</button>
+              {Object.keys(categoryConfig).map(c => (
+                <button key={c} onClick={() => setCategoryFilter(c)} style={{
+                  background: categoryFilter === c ? categoryConfig[c].bg : '#1e293b',
+                  color: categoryFilter === c ? categoryConfig[c].color : '#94a3b8',
+                  borderRadius: '8px', padding: '8px 14px', border: categoryFilter === c ? `1px solid ${categoryConfig[c].color}` : 'none',
+                  cursor: 'pointer', fontSize: '13px'
+                }}>{categoryConfig[c].icon} {categoryConfig[c].label}</button>
               ))}
             </div>
 
@@ -265,6 +299,14 @@ function Dashboard() {
                       color: priorityColors[task.priority].color,
                       fontWeight: '600', textTransform: 'uppercase'
                     }}>{task.priority}</span>
+                    {task.category && categoryConfig[task.category] && (
+                      <span style={{
+                        fontSize: '11px', padding: '3px 10px', borderRadius: '99px',
+                        background: categoryConfig[task.category].bg,
+                        color: categoryConfig[task.category].color,
+                        fontWeight: '600'
+                      }}>{categoryConfig[task.category].icon} {categoryConfig[task.category].label}</span>
+                    )}
                     {task.dueDate && (
                       <span style={{ fontSize: '11px', color: new Date(task.dueDate) < new Date() && !task.completed ? '#fca5a5' : '#94a3b8' }}>
                         📅 {new Date(task.dueDate).toLocaleDateString()}
