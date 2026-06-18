@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 const API = 'https://task-manager-9glc.onrender.com'
 
-function Profile({ setToken }) {
+function Profile({ setToken, theme }) {
   const [user, setUser] = useState({ name: '', email: '', avatar: '' })
   const [newName, setNewName] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
@@ -15,6 +15,15 @@ function Profile({ setToken }) {
   const fileInputRef = useRef(null)
   const token = localStorage.getItem('token')
   const navigate = useNavigate()
+  const isDark = theme === 'dark'
+
+  const colors = isDark ? {
+    cardBg: '#1e293b', border: '#334155', text: '#f1f5f9',
+    textMuted: '#94a3b8', inputBg: '#0f172a', inputBorder: '#334155'
+  } : {
+    cardBg: '#ffffff', border: '#e2e8f0', text: '#0f172a',
+    textMuted: '#64748b', inputBg: '#f8fafc', inputBorder: '#cbd5e1'
+  }
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -91,9 +100,9 @@ function Profile({ setToken }) {
   }
 
   return (
-    <div style={{ padding: '30px', maxWidth: '600px' }}>
-      <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#f1f5f9', marginBottom: '8px' }}>Profile 👤</h1>
-      <p style={{ color: '#94a3b8', marginBottom: '30px' }}>Manage your account</p>
+    <div style={{ padding: '0', maxWidth: '600px' }}>
+      <h1 style={{ fontSize: '24px', fontWeight: '700', color: colors.text, marginBottom: '8px' }}>Profile 👤</h1>
+      <p style={{ color: colors.textMuted, marginBottom: '30px' }}>Manage your account</p>
 
       {message && (
         <div style={{ background: '#052e16', color: '#86efac', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px' }}>
@@ -107,7 +116,7 @@ function Profile({ setToken }) {
       )}
 
       {/* Avatar Card */}
-      <div style={{ background: '#1e293b', borderRadius: '16px', padding: '24px', marginBottom: '20px', textAlign: 'center' }}>
+      <div style={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '24px', marginBottom: '20px', textAlign: 'center' }}>
         <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
           {user.avatar ? (
             <img src={user.avatar} alt="Profile"
@@ -132,10 +141,10 @@ function Profile({ setToken }) {
 
         <input type="file" ref={fileInputRef} onChange={handleAvatarUpload} accept="image/*" style={{ display: 'none' }} />
 
-        {uploading && <p style={{ color: '#94a3b8', fontSize: '13px', marginBottom: '8px' }}>Uploading... ⏳</p>}
+        {uploading && <p style={{ color: colors.textMuted, fontSize: '13px', marginBottom: '8px' }}>Uploading... ⏳</p>}
 
-        <h2 style={{ color: '#f1f5f9', fontSize: '20px', fontWeight: '600' }}>{user.name || 'No name set'}</h2>
-        <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '16px' }}>{user.email}</p>
+        <h2 style={{ color: colors.text, fontSize: '20px', fontWeight: '600' }}>{user.name || 'No name set'}</h2>
+        <p style={{ color: colors.textMuted, fontSize: '14px', marginBottom: '16px' }}>{user.email}</p>
 
         <button onClick={() => fileInputRef.current.click()} style={{
           background: 'transparent', border: '1px solid #6366f1',
@@ -147,10 +156,10 @@ function Profile({ setToken }) {
       </div>
 
       {/* Update Name */}
-      <div style={{ background: '#1e293b', borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
-        <h3 style={{ color: '#f1f5f9', marginBottom: '16px', fontSize: '16px' }}>✏️ Update Name</h3>
+      <div style={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
+        <h3 style={{ color: colors.text, marginBottom: '16px', fontSize: '16px' }}>✏️ Update Name</h3>
         <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
-          style={{ width: '100%', marginBottom: '12px', display: 'block', background: '#0f172a', border: '1px solid #334155', color: '#e2e8f0', padding: '10px 14px', borderRadius: '8px' }}
+          style={{ width: '100%', marginBottom: '12px', display: 'block', background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.text, padding: '10px 14px', borderRadius: '8px', boxSizing: 'border-box' }}
         />
         <button onClick={updateName} style={{ background: '#6366f1', color: 'white', borderRadius: '8px', padding: '10px 20px', border: 'none', cursor: 'pointer' }}>
           Update Name
@@ -158,15 +167,15 @@ function Profile({ setToken }) {
       </div>
 
       {/* Change Password */}
-      <div style={{ background: '#1e293b', borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
-        <h3 style={{ color: '#f1f5f9', marginBottom: '16px', fontSize: '16px' }}>🔐 Change Password</h3>
+      <div style={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '24px', marginBottom: '20px' }}>
+        <h3 style={{ color: colors.text, marginBottom: '16px', fontSize: '16px' }}>🔐 Change Password</h3>
         <input type="password" placeholder="Current Password" value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          style={{ width: '100%', marginBottom: '12px', display: 'block', background: '#0f172a', border: '1px solid #334155', color: '#e2e8f0', padding: '10px 14px', borderRadius: '8px' }}
+          style={{ width: '100%', marginBottom: '12px', display: 'block', background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.text, padding: '10px 14px', borderRadius: '8px', boxSizing: 'border-box' }}
         />
         <input type="password" placeholder="New Password" value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          style={{ width: '100%', marginBottom: '12px', display: 'block', background: '#0f172a', border: '1px solid #334155', color: '#e2e8f0', padding: '10px 14px', borderRadius: '8px' }}
+          style={{ width: '100%', marginBottom: '12px', display: 'block', background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.text, padding: '10px 14px', borderRadius: '8px', boxSizing: 'border-box' }}
         />
         <button onClick={updatePassword} style={{ background: '#6366f1', color: 'white', borderRadius: '8px', padding: '10px 20px', border: 'none', cursor: 'pointer' }}>
           Update Password
@@ -174,9 +183,9 @@ function Profile({ setToken }) {
       </div>
 
       {/* Logout */}
-      <div style={{ background: '#1e293b', borderRadius: '16px', padding: '24px' }}>
-        <h3 style={{ color: '#f1f5f9', marginBottom: '8px', fontSize: '16px' }}>🚪 Logout</h3>
-        <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '16px' }}>Sign out of your account</p>
+      <div style={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '24px' }}>
+        <h3 style={{ color: colors.text, marginBottom: '8px', fontSize: '16px' }}>🚪 Logout</h3>
+        <p style={{ color: colors.textMuted, fontSize: '14px', marginBottom: '16px' }}>Sign out of your account</p>
         <button onClick={logout} style={{ background: '#ef4444', color: 'white', borderRadius: '8px', padding: '10px 20px', border: 'none', cursor: 'pointer', fontWeight: '600' }}>
           Logout
         </button>
