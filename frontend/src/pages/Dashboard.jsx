@@ -19,6 +19,10 @@ function Dashboard({ setToken }) {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark')
+  const [notifPermission, setNotifPermission] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
+  )
+  const [notifiedTasks, setNotifiedTasks] = useState(new Set())
   const navigate = useNavigate()
   const token = localStorage.getItem('token')
   const isDark = theme === 'dark'
@@ -35,6 +39,12 @@ function Dashboard({ setToken }) {
 
   const toggleTheme = () => setTheme(isDark ? 'light' : 'dark')
 
+  const requestNotifPermission = async () => {
+    if (typeof Notification === 'undefined') return
+    const result = await Notification.requestPermission()
+    setNotifPermission(result)
+  }
+
   const fetchTasks = async () => {
     try {
       const res = await axios.get(`${API}/api/tasks`, {
@@ -47,6 +57,27 @@ function Dashboard({ setToken }) {
   }
 
   useEffect(() => { fetchTasks() }, [])
+
+  // ===== DUE DATE NOTIFICATIONS =====
+  useEffect(() => {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return
+    const now = new Date()
+    tasks.forEach(task => {
+      if (task.completed || !task.dueDate) return
+      if (notifiedTasks.has(task._id)) return
+      const due = new Date(task.dueDate)
+      const diffHours = (due - now) / (1000 * 60 * 60)
+      if (diffHours <= 24) {
+        const isOverdue = diffHours < 0
+        try {
+          new Notification(isOverdue ? '⚠️ Task Overdue!' : '⏰ Task Due Soon!', {
+            body: `"${task.title}" ${isOverdue ? 'was due on' : 'is due on'} ${due.toLocaleDateString()}`
+          })
+        } catch {}
+        setNotifiedTasks(prev => new Set(prev).add(task._id))
+      }
+    })
+  }, [tasks])
 
   const addTask = async () => {
     if (!title.trim()) return
@@ -217,6 +248,31 @@ function Dashboard({ setToken }) {
           <span style={{ fontSize: isMobile ? '18px' : '16px' }}>{isDark ? '☀️' : '🌙'}</span>
           {isDark ? 'Light' : 'Dark'}
         </button>
+
+        {/* Notification Toggle */}
+        {notifPermission !== 'unsupported' && (
+          <button onClick={requestNotifPermission} disabled={notifPermission === 'granted'} style={{
+            display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: isMobile ? '2px' : '10px',
+            padding: isMobile ? '8px 6px' : '10px 14px',
+            borderRadius: '10px', border: `1px solid ${colors.border}`,
+            background: 'transparent',
+            color: notifPermission === 'granted' ? '#22c55e' : colors.navInactive,
+            cursor: notifPermission === 'granted' ? 'default' : 'pointer',
+            fontSize: isMobile ? '11px' : '14px',
+            fontWeight: '500',
+            textAlign: 'center',
+            width: isMobile ? 'auto' : '100%',
+            flex: isMobile ? 1 : 'none',
+            marginTop: isMobile ? '0' : '8px'
+          }}>
+            <span style={{ fontSize: isMobile ? '18px' : '16px' }}>{notifPermission === 'granted' ? '🔔' : '🔕'}</span>
+            {notifPermission === 'granted' ? 'Alerts On' : 'Enable Alerts'}
+          </button>
+        )}
       </div>
 
       {/* Main Content */}
