@@ -8,6 +8,7 @@ const API = 'https://task-manager-9glc.onrender.com'
 function Dashboard() {
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('medium')
   const [dueDate, setDueDate] = useState('')
   const [filter, setFilter] = useState('all')
@@ -32,10 +33,11 @@ function Dashboard() {
   const addTask = async () => {
     if (!title.trim()) return
     await axios.post(`${API}/api/tasks`,
-      { title, priority, dueDate: dueDate || null },
+      { title, description, priority, dueDate: dueDate || null },
       { headers: { Authorization: `Bearer ${token}` } }
     )
     setTitle('')
+    setDescription('')
     setDueDate('')
     fetchTasks()
   }
@@ -183,7 +185,7 @@ function Dashboard() {
 
             {/* Add Task */}
             <div style={{ background: '#1e293b', padding: '20px', borderRadius: '16px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
                 <input
                   type="text" placeholder="Add a new task..."
                   value={title} onChange={(e) => setTitle(e.target.value)}
@@ -199,7 +201,19 @@ function Dashboard() {
                 <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
                   style={{ padding: '10px', background: '#0f172a', border: '1px solid #334155', color: '#e2e8f0', borderRadius: '8px' }}
                 />
-                <button onClick={addTask} style={{ background: '#6366f1', color: 'white', borderRadius: '8px', padding: '10px 20px', border: 'none', cursor: 'pointer' }}>
+              </div>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <textarea
+                  placeholder="Add a description (optional)..."
+                  value={description} onChange={(e) => setDescription(e.target.value)}
+                  rows={2}
+                  style={{
+                    flex: 1, background: '#0f172a', border: '1px solid #334155',
+                    color: '#e2e8f0', padding: '10px 14px', borderRadius: '8px',
+                    fontFamily: 'inherit', fontSize: '14px', resize: 'vertical'
+                  }}
+                />
+                <button onClick={addTask} style={{ background: '#6366f1', color: 'white', borderRadius: '8px', padding: '10px 20px', border: 'none', cursor: 'pointer', alignSelf: 'flex-start' }}>
                   + Add
                 </button>
               </div>
@@ -232,13 +246,18 @@ function Dashboard() {
               <div key={task._id} style={{
                 background: '#1e293b', borderRadius: '12px', padding: '16px 20px',
                 marginBottom: '12px', display: 'flex', justifyContent: 'space-between',
-                alignItems: 'center', borderLeft: `4px solid ${priorityColors[task.priority].dot}`,
+                alignItems: 'flex-start', borderLeft: `4px solid ${priorityColors[task.priority].dot}`,
                 opacity: task.completed ? 0.6 : 1
               }}>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontSize: '16px', color: '#f1f5f9', textDecoration: task.completed ? 'line-through' : 'none', marginBottom: '6px' }}>
                     {task.title}
                   </p>
+                  {task.description && (
+                    <p style={{ fontSize: '13px', color: '#94a3b8', marginBottom: '8px', lineHeight: '1.4' }}>
+                      {task.description}
+                    </p>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <span style={{
                       fontSize: '11px', padding: '3px 10px', borderRadius: '99px',
