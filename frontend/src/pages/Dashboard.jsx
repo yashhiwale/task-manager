@@ -5,7 +5,7 @@ import Profile from './Profile'
 
 const API = 'https://task-manager-9glc.onrender.com'
 
-function Dashboard() {
+function Dashboard({ setToken }) {
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -369,7 +369,7 @@ function Dashboard() {
         )}
 
         {/* PROFILE TAB */}
-        {activeTab === 'profile' && <Profile />}
+        {activeTab === 'profile' && <Profile setToken={setToken} />}
 
       </div>
     </div>

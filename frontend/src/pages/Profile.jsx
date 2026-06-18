@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 const API = 'https://task-manager-9glc.onrender.com'
 
-function Profile() {
+function Profile({ setToken }) {
   const [user, setUser] = useState({ name: '', email: '', avatar: '' })
   const [newName, setNewName] = useState('')
   const [currentPassword, setCurrentPassword] = useState('')
@@ -86,6 +86,7 @@ function Profile() {
 
   const logout = () => {
     localStorage.removeItem('token')
+    setToken(null)
     navigate('/login')
   }
 
