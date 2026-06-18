@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import Profile from './Profile'
 
 const API = 'https://task-manager-9glc.onrender.com'
@@ -137,6 +138,15 @@ function Dashboard({ setToken }) {
     { id: 'profile', icon: '👤', label: 'Profile' },
   ]
 
+  // ===== CHART DATA =====
+  const priorityChartData = ['high', 'medium', 'low']
+    .map(p => ({ name: p.charAt(0).toUpperCase() + p.slice(1), value: tasks.filter(t => t.priority === p).length, color: priorityColors[p].dot }))
+    .filter(d => d.value > 0)
+
+  const categoryChartData = Object.keys(categoryConfig)
+    .map(c => ({ name: categoryConfig[c].label, value: tasks.filter(t => t.category === c).length, color: categoryConfig[c].color }))
+    .filter(d => d.value > 0)
+
   return (
     <div style={{ minHeight: '100vh', background: colors.bg, display: 'flex', flexDirection: isMobile ? 'column' : 'row', transition: 'background 0.2s ease' }}>
 
@@ -246,6 +256,47 @@ function Dashboard({ setToken }) {
                   height: '10px', borderRadius: '99px',
                   width: `${completionRate}%`, transition: 'width 0.5s ease'
                 }} />
+              </div>
+            </div>
+
+            {/* Charts */}
+            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '16px', marginBottom: '20px' }}>
+              <div style={{ flex: 1, background: colors.cardBg, borderRadius: '16px', padding: isMobile ? '16px' : '24px', border: `1px solid ${colors.border}` }}>
+                <p style={{ color: colors.text, fontWeight: '600', marginBottom: '8px', fontSize: isMobile ? '14px' : '16px' }}>Priority Distribution</p>
+                {priorityChartData.length === 0 ? (
+                  <p style={{ color: colors.textMuted, fontSize: '13px', textAlign: 'center', padding: '40px 0' }}>No tasks yet</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie data={priorityChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3}>
+                        {priorityChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '8px', color: colors.text }} />
+                      <Legend formatter={(value) => <span style={{ color: colors.textMuted, fontSize: '12px' }}>{value}</span>} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+
+              <div style={{ flex: 1, background: colors.cardBg, borderRadius: '16px', padding: isMobile ? '16px' : '24px', border: `1px solid ${colors.border}` }}>
+                <p style={{ color: colors.text, fontWeight: '600', marginBottom: '8px', fontSize: isMobile ? '14px' : '16px' }}>Category Distribution</p>
+                {categoryChartData.length === 0 ? (
+                  <p style={{ color: colors.textMuted, fontSize: '13px', textAlign: 'center', padding: '40px 0' }}>No tasks yet</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie data={categoryChartData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={45} outerRadius={75} paddingAngle={3}>
+                        {categoryChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                        ))}
+                      </Pie>
+                      <Tooltip contentStyle={{ background: colors.cardBg, border: `1px solid ${colors.border}`, borderRadius: '8px', color: colors.text }} />
+                      <Legend formatter={(value) => <span style={{ color: colors.textMuted, fontSize: '12px' }}>{value}</span>} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </div>
             </div>
 
