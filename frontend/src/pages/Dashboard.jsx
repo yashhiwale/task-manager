@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -6,13 +6,21 @@ import Profile from './Profile'
 
 const API = 'https://task-manager-9glc.onrender.com'
 
+const getTodayStr = () => {
+  const d = new Date()
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
 function Dashboard({ setToken }) {
   const [tasks, setTasks] = useState([])
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('medium')
   const [category, setCategory] = useState('work')
-  const [dueDate, setDueDate] = useState('')
+  const [dueDate, setDueDate] = useState(getTodayStr())
   const [filter, setFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [search, setSearch] = useState('')
@@ -23,6 +31,7 @@ function Dashboard({ setToken }) {
     typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
   )
   const [notifiedTasks, setNotifiedTasks] = useState(new Set())
+  const dateTouchedRef = useRef(false)
   const navigate = useNavigate()
   const token = localStorage.getItem('token')
   const isDark = theme === 'dark'
@@ -36,6 +45,29 @@ function Dashboard({ setToken }) {
   useEffect(() => {
     localStorage.setItem('theme', theme)
   }, [theme])
+
+  // ===== AUTO-UPDATE DATE FIELD AT MIDNIGHT =====
+  useEffect(() => {
+    let timeoutId
+    const scheduleMidnight = () => {
+      const now = new Date()
+      const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5)
+      const ms = next - now
+      timeoutId = setTimeout(() => {
+        if (!dateTouchedRef.current) {
+          setDueDate(getTodayStr())
+        }
+        scheduleMidnight()
+      }, ms)
+    }
+    scheduleMidnight()
+    return () => clearTimeout(timeoutId)
+  }, [])
+
+  const handleDueDateChange = (e) => {
+    setDueDate(e.target.value)
+    dateTouchedRef.current = true
+  }
 
   const toggleTheme = () => setTheme(isDark ? 'light' : 'dark')
 
@@ -87,7 +119,8 @@ function Dashboard({ setToken }) {
     )
     setTitle('')
     setDescription('')
-    setDueDate('')
+    setDueDate(getTodayStr())
+    dateTouchedRef.current = false
     fetchTasks()
   }
 
@@ -417,9 +450,19 @@ function Dashboard({ setToken }) {
                     <option value="study">📚 Study</option>
                     <option value="other">📌 Other</option>
                   </select>
-                  <input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)}
-                    style={{ flex: isMobile ? 1 : 'none', padding: '10px', background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.text, borderRadius: '8px', minWidth: isMobile ? '0' : 'auto' }}
-                  />
+                  <div style={{ position: 'relative', flex: isMobile ? 1 : 'none' }}>
+                    <input type="date" value={dueDate} onChange={handleDueDateChange}
+                      style={{ width: isMobile ? '100%' : 'auto', padding: '10px', background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.text, borderRadius: '8px', minWidth: isMobile ? '0' : 'auto', boxSizing: 'border-box' }}
+                    />
+                    {dueDate === getTodayStr() && (
+                      <span style={{
+                        position: 'absolute', top: '-8px', right: '-4px',
+                        background: '#22c55e', color: 'white', fontSize: '9px',
+                        padding: '2px 7px', borderRadius: '99px', fontWeight: '700',
+                        boxShadow: `0 0 0 2px ${colors.cardBg}`, pointerEvents: 'none'
+                      }}>Today</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '10px' }}>
