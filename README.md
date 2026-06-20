@@ -25,25 +25,26 @@ A full-stack task management web application built with the MERN stack (MongoDB,
 
 ## 🛠️ Tech Stack
 
-**Frontend:** React (Vite), React Router, Axios, Recharts
-**Backend:** Node.js, Express, JWT, bcrypt.js
-**Database:** MongoDB Atlas (Mongoose)
-**File Storage:** Cloudinary (profile picture uploads)
-**Deployment:** Vercel (frontend) + Render (backend)
+- **Frontend:** React (Vite), React Router, Axios, Recharts
+- **Backend:** Node.js, Express, JWT, bcrypt.js
+- **Database:** MongoDB Atlas (Mongoose)
+- **File Storage:** Cloudinary (profile picture uploads)
+- **Deployment:** Vercel (frontend) + Render (backend)
 
 ## 📂 Project Structure
 
+```
 task-manager/
-
 ├── backend/
-│   ├── models/        # User & Task schemas
-│   ├── routes/        # Auth & task API routes
-│   ├── cloudinary.js   # Image upload config
-│   └── server.js       # Express app entry point
+│   ├── models/          (User & Task schemas)
+│   ├── routes/          (Auth & task API routes)
+│   ├── cloudinary.js    (Image upload config)
+│   └── server.js        (Express app entry point)
 └── frontend/
-└── src/
-├── pages/      # Login, Register, Dashboard, Profile
-└── App.jsx      # Routing & auth state
+    └── src/
+        ├── pages/       (Login, Register, Dashboard, Profile)
+        └── App.jsx      (Routing & auth state)
+```
 
 ## 🔌 API Endpoints
 
