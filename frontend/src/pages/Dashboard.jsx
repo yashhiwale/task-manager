@@ -554,7 +554,7 @@ function Dashboard({ setToken }) {
                     )}
                     {task.dueDate && (
                       <span style={{ fontSize: '11px', color: new Date(task.dueDate) < new Date() && !task.completed ? '#ef4444' : colors.textMuted }}>
-                        📅 {new Date(task.dueDate).toLocaleDateString()}
+                        📅 {new Date(task.dueDate).toLocaleDateString('en-GB')}
                         {new Date(task.dueDate) < new Date() && !task.completed && ' ⚠️ Overdue'}
                       </span>
                     )}
