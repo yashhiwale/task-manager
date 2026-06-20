@@ -454,14 +454,6 @@ function Dashboard({ setToken }) {
                     <input type="date" value={dueDate} onChange={handleDueDateChange}
                       style={{ width: isMobile ? '100%' : 'auto', padding: '10px', background: colors.inputBg, border: `1px solid ${colors.inputBorder}`, color: colors.text, borderRadius: '8px', minWidth: isMobile ? '0' : 'auto', boxSizing: 'border-box' }}
                     />
-                    {dueDate === getTodayStr() && (
-                      <span style={{
-                        position: 'absolute', top: '-8px', right: '-4px',
-                        background: '#22c55e', color: 'white', fontSize: '9px',
-                        padding: '2px 7px', borderRadius: '99px', fontWeight: '700',
-                        boxShadow: `0 0 0 2px ${colors.cardBg}`, pointerEvents: 'none'
-                      }}>Today</span>
-                    )}
                   </div>
                 </div>
               </div>
